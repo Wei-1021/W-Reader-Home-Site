@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-Reader - JetBrains IDEs 小说阅读插件</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#24C18F',
+                        secondary: '#36CFC9',
+                        dark: '#1D2939',
+                        light: '#F9FAFB',
+                        accent: '#FF7D00'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+        }
+    </style>
+    <style>
+        /* 基础动画定义 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* 滚动进度条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #24C18F;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0E42D2;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+        }
+
+        css-doodle {
+            position: absolute;
+            width: 100%;
+            backdrop-filter: blur(100px);
+        }
+
+        .section::after {
+            content: "";
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            right: -100%;
+            bottom: -100%;
+            backdrop-filter: blur(100px);
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="font-inter bg-light text-dark antialiased">
+<!-- 导航栏 -->
+<header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-sm">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white">
+                    <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                         width="30" height="30">
+                        <path d="M369.664 973.312c-42.496 0-77.312-34.816-77.312-77.312V263.168c0-42.496 34.816-77.312 77.312-77.312h492.032c42.496 0 77.312 34.816 77.312 77.312v632.32c0 42.496-34.816 77.312-77.312 77.312H369.664z"
+                              fill="#FFFFFF"></path>
+                        <path d="M861.696 209.92c29.184 0 53.76 24.064 53.76 53.76V896c0 29.184-24.064 53.76-53.76 53.76H369.664c-29.184 0-53.76-24.064-53.76-53.76V263.168c0-29.184 24.064-53.76 53.76-53.76h492.032m0-47.616H369.664c-55.808 0-101.376 45.568-101.376 101.376v632.32c0 55.808 45.568 101.376 101.376 101.376h492.032c55.808 0 101.376-45.568 101.376-101.376v-632.32c0.512-55.808-45.056-101.376-101.376-101.376z"
+                              fill="#333333"></path>
+                        <path d="M369.664 884.736c-42.496 0-77.312-34.816-77.312-77.312V174.592c0-42.496 34.816-77.312 77.312-77.312h492.032c42.496 0 77.312 34.816 77.312 77.312v632.32c0 42.496-34.816 77.312-77.312 77.312H369.664z"
+                              fill="#24c18f"></path>
+                        <path d="M861.696 121.344c29.184 0 53.76 24.064 53.76 53.76v632.32c0 29.184-24.064 53.76-53.76 53.76H369.664c-29.184 0-53.76-24.064-53.76-53.76V174.592c0-29.184 24.064-53.76 53.76-53.76h492.032m0-47.616H369.664c-55.808 0-101.376 45.568-101.376 101.376v632.32c0 55.808 45.568 101.376 101.376 101.376h492.032c55.808 0 101.376-45.568 101.376-101.376v-632.32c0.512-55.808-45.056-101.376-101.376-101.376z"
+                              fill="#333333"></path>
+                        <path d="M583.168 342.528c-5.632 0-10.752-2.048-15.36-5.632L512 290.304l-55.808 46.592c-4.608 3.584-9.728 5.632-15.36 5.632-3.584 0-7.168-0.512-10.24-2.048-8.192-4.096-13.824-12.288-13.824-21.504V121.344c0-13.312 10.752-24.064 24.064-24.064h142.336c13.312 0 24.064 10.752 24.064 24.064v197.12c0 9.216-5.632 17.92-13.824 21.504-3.072 1.536-6.656 2.56-10.24 2.56z"
+                              fill="#FF4540"></path>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold text-primary">W-Reader</span>
+            </div>
+
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#intro" class="font-medium hover:text-primary transition-custom">介绍</a>
+                <a href="#features" class="font-medium hover:text-primary transition-custom">功能</a>
+                <a href="#installation" class="font-medium hover:text-primary transition-custom">安装</a>
+<!--                <a href="#changelog" class="font-medium hover:text-primary transition-custom">更新日志</a>-->
+                <a href="#faq" class="font-medium hover:text-primary transition-custom">常见问题</a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <a href="https://plugins.jetbrains.com/plugin/25572-w-reader" target="_blank" class="hidden sm:flex items-center px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom">
+                    <i class="fa fa-download mr-2"></i> 立即安装
+                </a>
+                <a href="https://github.com/Wei-1021/w-reader" target="_blank" class="hidden sm:flex items-center px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom">
+                    <i class="fa fa-github mr-2"></i> GitHub
+                </a>
+
+                <!-- 移动端菜单按钮 -->
+                <button id="menu-toggle" class="md:hidden text-dark hover:text-primary transition-custom">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移动端导航菜单 -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white border-t animate-fade-in">
+        <div class="container mx-auto px-4 py-3 space-y-3">
+            <a href="#intro" class="block py-2 font-medium hover:text-primary transition-custom">介绍</a>
+            <a href="#features" class="block py-2 font-medium hover:text-primary transition-custom">功能</a>
+            <a href="#installation" class="block py-2 font-medium hover:text-primary transition-custom">安装</a>
+            <a href="#changelog" class="block py-2 font-medium hover:text-primary transition-custom">更新日志</a>
+            <a href="#faq" class="block py-2 font-medium hover:text-primary transition-custom">常见问题</a>
+            <a href="https://plugins.jetbrains.com/plugin/25572-w-reader" target="_blank" class="flex items-center px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom w-fit">
+                <i class="fa fa-download mr-2"></i> 立即安装
+            </a>
+            <a href="https://github.com/Wei-1021/w-reader" target="_blank" class="flex items-center px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-custom w-fit">
+                <i class="fa fa-github mr-2"></i> GitHub
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 英雄区域 -->
+<section class="section pt-32 pb-20 md:pt-40 md:pb-32 bg-gradient-to-br from-primary/5 to-primary/10">
+    <css-doodle>
+        :doodle {
+            @grid: 8x1 / 100vmin;
+        }
+        @place-cell: center;
+        width: @rand(40vmin, 80vmin);
+        height: @rand(40vmin, 80vmin);
+        transform: translate(@rand(-200%, 200%), @rand(-60%, 60%)) scale(@rand(.8, 1.8)) skew(@rand(45deg));
+        clip-path: polygon(
+            @r(0, 30%) @r(0, 50%),
+            @r(30%, 60%) @r(0%, 30%),
+            @r(60%, 100%) @r(0%, 50%),
+            @r(60%, 100%) @r(50%, 100%),
+            @r(30%, 60%) @r(60%, 100%),
+            @r(0, 30%) @r(60%, 100%)
+        );
+        background: @pick(
+            #ff5959, #95e1d3, #eaffd0, #fce38a, #f38181, #71c9ce, #e3fdfd, #fefdca, #cadefc, #defcf9, #6ef3d6, #fdc7ff
+        );
+        opacity: @rand(.3, .8);
+        position: relative;
+        top: @rand(-80%, 80%);
+        left: @rand(-80%, 80%);
+        animation: colorChange @rand(6.1s, 16.1s) infinite @rand(-.5s, -2.5s) linear alternate;
+        @keyframes colorChange {
+            100% {
+                left: 0;
+                top: 0;
+                filter: hue-rotate(360deg);
+            }
+        }
+    </css-doodle>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-dark mb-6 animate-fade-in" style="animation-delay: 0.1s">
+                在 IDE 中畅享<br class="md:hidden">沉浸式阅读体验
+            </h1>
+            <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-600 mb-10 max-w-2xl mx-auto animate-fade-in" style="animation-delay: 0.3s">
+                W-Reader 是专为开发者设计的轻量级小说阅读插件，让你在 JetBrains 系列 IDE 中轻松阅读各类书籍，工作阅读两不误。
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in" style="animation-delay: 0.5s">
+                <a href="https://plugins.jetbrains.com/plugin/25572-w-reader"
+                   target="_blank"
+                   class="px-8 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-custom shadow-lg shadow-primary/20">
+                    <i class="fa fa-download mr-2"></i> 立即安装
+                </a>
+                <a href="#features" class="px-8 py-3 rounded-lg bg-white text-primary border border-primary font-medium hover:bg-gray-50 transition-custom">
+                    <i class="fa fa-info mr-2"></i> 了解功能
+                </a>
+            </div>
+
+            <!-- 主截图 -->
+            <div class="mt-16 rounded-xl overflow-hidden shadow-2xl border border-gray-200 animate-fade-in" style="animation-delay: 0.7s">
+                <img src="static/img/cover.png"
+                     alt="W-Reader 插件预览"
+                     class="w-full h-auto object-cover">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 介绍部分 -->
+<section id="intro" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">为什么选择 W-Reader？</h2>
+            <p class="text-gray-600 text-lg">专为开发者打造的阅读体验，无需离开你的工作环境即可享受阅读乐趣</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100">
+                <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                    <i class="fa fa-code text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">无缝集成</h3>
+                <p class="text-gray-600">完美融入 JetBrains 系列 IDE（IDEA、WebStorm 等），保持开发环境一致性，无需切换应用。</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100">
+                <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                    <i class="fa fa-book text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">丰富资源</h3>
+                <p class="text-gray-600">整合多个优质书源，支持在线搜索海量小说资源，同时兼容本地 TXT/EPUB 格式文件。</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100">
+                <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                    <i class="fa fa-sliders text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">灵活定制</h3>
+                <p class="text-gray-600">多种阅读模式可选，支持自定义字体、颜色和快捷键，打造个性化阅读体验。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 功能部分 -->
+<section id="features" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">核心功能</h2>
+            <p class="text-gray-600 text-lg">强大而实用的功能，让你的阅读体验更加高效舒适</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 mb-16">
+            <!-- 功能卡片 -->
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-search text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">便捷检索</h3>
+                    <p class="text-gray-600">支持在线搜索海量小说资源，精准定位心仪作品，多书源切换满足不同需求。</p>
+                </div>
+            </div>
+
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-file-text text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">本地加载</h3>
+                    <p class="text-gray-600">无缝支持 TXT/EPUB 格式本地小说加载，满足离线阅读需求，支持多种字符集设置。</p>
+                </div>
+            </div>
+
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-columns text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">模式切换</h3>
+                    <p class="text-gray-600">支持侧边栏、状态栏、编辑器提示消息和代码注释块等多种阅读模式，适应不同场景。</p>
+                </div>
+            </div>
+
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-play text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">自动阅读</h3>
+                    <p class="text-gray-600">开启自动阅读功能，内容自动切换播放，支持章节自动切换和阅读速度调节。</p>
+                </div>
+            </div>
+
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-volume-up text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">听书功能</h3>
+                    <p class="text-gray-600">支持多音色听书模式，享受听觉盛宴，让阅读不止于视觉。</p>
+                </div>
+            </div>
+
+            <div class="feature-card bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-custom border border-gray-100 flex gap-6">
+                <div class="feature-icon w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 transition-custom">
+                    <i class="fa fa-keyboard-o text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">快捷键控制</h3>
+                    <p class="text-gray-600">预设翻页、章节切换、听书等快捷键，提升阅读效率，支持自定义设置。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 截图展示 -->
+        <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+            <div class="grid md:grid-cols-2">
+                <div class="p-8 md:p-12 flex flex-col justify-center">
+                    <h3 class="text-2xl font-bold mb-4">多模式阅读体验</h3>
+                    <p class="text-gray-600 mb-6">根据你的工作状态和阅读偏好，自由切换不同的阅读模式，让阅读融入开发流程。</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-secondary mt-1"></i>
+                            <span>侧边栏模式：不影响代码编辑的独立阅读区</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-secondary mt-1"></i>
+                            <span>状态栏模式：极简风格，仅占用底部状态栏空间</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-secondary mt-1"></i>
+                            <span>编辑器提示模式：以提示框形式展示内容</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-secondary mt-1"></i>
+                            <span>代码注释块模式：伪装成代码注释的趣味阅读方式</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-gray-100">
+                    <img src="./static/img/cover2.png" alt="多模式阅读展示" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 安装方式 -->
+<section id="installation" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">简单三步，开始使用</h2>
+            <p class="text-gray-600 text-lg">快速安装 W-Reader 插件，开启你的 IDE 阅读之旅</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div class="relative">
+                <div class="absolute -left-6 top-6 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">1</div>
+                <div class="bg-gray-50 rounded-xl p-8 shadow-sm border border-gray-100 h-full pl-6">
+                    <h3 class="text-xl font-semibold mb-4">打开插件市场</h3>
+                    <p class="text-gray-600 mb-4">在你的 JetBrains IDE 中，打开 <code class="bg-gray-200 px-1 py-0.5 rounded">File → Settings → Plugins</code></p>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="absolute -left-6 top-6 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">2</div>
+                <div class="bg-gray-50 rounded-xl p-8 shadow-sm border border-gray-100 h-full pl-6">
+                    <h3 class="text-xl font-semibold mb-4">搜索并安装</h3>
+                    <p class="text-gray-600 mb-4">在插件市场搜索 <code class="bg-gray-200 px-1 py-0.5 rounded">W-Reader</code>，点击安装按钮</p>
+                </div>
+            </div>
+
+            <div class="relative">
+                <div class="absolute -left-6 top-6 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">3</div>
+                <div class="bg-gray-50 rounded-xl p-8 shadow-sm border border-gray-100 h-full pl-6">
+                    <h3 class="text-xl font-semibold mb-4">重启并使用</h3>
+                    <p class="text-gray-600 mb-4">安装完成后重启 IDE，在侧边栏找到 W-Reader 图标开始使用</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-16 max-w-3xl mx-auto bg-gray-50 rounded-xl p-8 border border-gray-100">
+            <h3 class="text-xl font-semibold mb-4">手动安装（适用于离线环境）</h3>
+            <ol class="list-decimal pl-5 space-y-3 text-gray-600">
+                <li>从 <a href="https://plugins.jetbrains.com/plugin/25572-w-reader/versions" target="_blank" class="text-primary hover:underline">JetBrains Marketplace</a> 下载最新版本的插件包（.zip 或 .jar）</li>
+                <li>在 IDE 中打开 <code class="bg-gray-200 px-1 py-0.5 rounded">File → Settings → Plugins</code></li>
+                <li>点击右上角齿轮图标，选择 <code class="bg-gray-200 px-1 py-0.5 rounded">Install Plugin from Disk...</code></li>
+                <li>选择下载的插件包，完成安装后重启 IDE</li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- 快捷键指南 -->
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">快捷键指南</h2>
+            <p class="text-gray-600 text-lg">高效操作，提升阅读体验</p>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100 max-w-4xl mx-auto">
+            <table class="w-full">
+                <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="py-4 px-6 text-left font-semibold">功能</th>
+                    <th class="py-4 px-6 text-left font-semibold">默认快捷键</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">搜索小说</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-7(小键盘7)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">显示目录</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-9(小键盘9)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">加载本地文件</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-ADD(小键盘+号)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">隐藏/显示文字</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-SUBTRACT(小键盘-号)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">代码注释块</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-DIVIDE(小键盘/号)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">编辑器提示消息框</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-0(小键盘0)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">听书</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-3(小键盘3)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">上一章</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-4(小键盘4)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">下一章</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-6(小键盘6)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">上一行（状态栏模式）</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-8(小键盘8)</kbd></td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-custom">
+                    <td class="py-4 px-6">下一行（状态栏模式）</td>
+                    <td class="py-4 px-6"><kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Alt + NUMPAD-2(小键盘2)</kbd></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8 text-center text-gray-600">
+            <p>部分功能没有设置快捷键，若没有小键盘或需要自定义快捷键，可通过 <code class="bg-gray-200 px-1 py-0.5 rounded">File → Settings → Keymap → Plugins → W-Reader</code> 进行修改</p>
+        </div>
+    </div>
+</section>
+
+<!-- 更新日志 -->
+<!--<section id="changelog" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">更新日志</h2>
+            <p class="text-gray-600 text-lg">持续优化，提升体验</p>
+        </div>
+
+        <div class="max-w-4xl mx-auto space-y-8">
+            &lt;!&ndash; 最新版本 &ndash;&gt;
+            <div class="bg-primary/5 rounded-xl p-6 border border-primary/20">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-primary">v0.0.15</h3>
+                    <span class="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full">最新版本</span>
+                </div>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-primary mt-1"></i>
+                        <span>【修复】编辑器消息提示窗口宽度和高度的设置异常问题</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-primary mt-1"></i>
+                        <span>【优化】自动阅读新增章节自动切换功能</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-primary mt-1"></i>
+                        <span>【优化】自动阅读时间支持小数点设置</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-primary mt-1"></i>
+                        <span>【优化】EPUB文件目录读取逻辑优化</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-primary mt-1"></i>
+                        <span>【优化】图片预览初始化逻辑优化，图片尺寸适应窗口大小</span>
+                    </li>
+                </ul>
+            </div>
+
+            &lt;!&ndash; 历史版本 &ndash;&gt;
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <h3 class="text-xl font-bold mb-4">v0.0.14</h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【完善】代码注释块对齐缩进</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【完善】侧边栏页面滑动效果更细腻</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【修复】因选择书源冲突，导致切换功能出现异常</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【新增】书源</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【新增】增加编辑器消息提示窗口宽度和高度的设置</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <h3 class="text-xl font-bold mb-4">v0.0.13</h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【完善】编辑器消息提示模式下记录阅读滚动位置</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【修复】部分EPUB格式文件的图片无法展示的问题</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                        <span>【新增】点击图片进入图片预览界面</span>
+                    </li>
+                </ul>
+            </div>
+
+            <button id="show-more-changelog" class="w-full py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-custom">
+                查看更多版本 <i class="fa fa-chevron-down ml-1"></i>
+            </button>
+
+            <div id="more-changelog" class="hidden space-y-6">
+                &lt;!&ndash; 更多版本内容 &ndash;&gt;
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4">v0.0.12</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                            <span>【新增】书本基本信息展示</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                            <span>【新增】epub文件内嵌图片展示</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4">v0.0.10</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start gap-3">
+                            <i class="fa fa-check-circle text-gray-500 mt-1"></i>
+                            <span>【调整】"有声阅读"更名为"听书"</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>-->
+
+<!-- 常见问题 -->
+<section id="faq" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">常见问题</h2>
+            <p class="text-gray-600 text-lg">解答你可能遇到的问题</p>
+        </div>
+
+        <div class="max-w-3xl mx-auto space-y-4">
+            <!-- FAQ 项目 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <button class="faq-toggle w-full flex justify-between items-center p-6 text-left font-medium">
+                    <span>本地加载小说文件后不显示内容或出现乱码怎么办？</span>
+                    <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div class="faq-content hidden px-6 pb-6 text-gray-600">
+                    <p>这种情况大部分是字符集设置不正确所导致，请尝试修改字符集，如GBK、UTF-8等编码格式。</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <button class="faq-toggle w-full flex justify-between items-center p-6 text-left font-medium">
+                    <span>听书功能失效该如何解决？</span>
+                    <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div class="faq-content hidden px-6 pb-6 text-gray-600">
+                    <p>听书功能无效通常是因为API发生变化，从而导致无法播放音频，请等待插件更新修复或联系开发者反馈。</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <button class="faq-toggle w-full flex justify-between items-center p-6 text-left font-medium">
+                    <span>如何修改快捷键？</span>
+                    <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div class="faq-content hidden px-6 pb-6 text-gray-600">
+                    <p>可以通过 <code class="bg-gray-200 px-1 py-0.5 rounded">File → Settings → Keymap → Plugins → W-Reader</code> 找到对应的功能进行快捷键修改。</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <button class="faq-toggle w-full flex justify-between items-center p-6 text-left font-medium">
+                    <span>插件支持哪些IDE？</span>
+                    <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div class="faq-content hidden px-6 pb-6 text-gray-600">
+                    <p>W-Reader 支持所有基于 IntelliJ 平台的 JetBrains IDE，包括 IntelliJ IDEA、WebStorm、PyCharm、PhpStorm 等。</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <button class="faq-toggle w-full flex justify-between items-center p-6 text-left font-medium">
+                    <span>如何添加自定义书源？</span>
+                    <i class="fa fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div class="faq-content hidden px-6 pb-6 text-gray-600">
+                    <p>目前插件还不支持添加自定义书源，该功能在规划之中，请耐心等待。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 联系与鸣谢 -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <div>
+                <h2 class="text-2xl font-bold mb-6">联系我们</h2>
+                <p class="text-gray-600 mb-6">如果您有任何问题或建议，请通过以下方式联系：</p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-envelope text-primary text-xl"></i>
+                        <a href="mailto:1075542448@qq.com" class="text-primary hover:underline">Email: 1075542448@qq.com</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-qq text-primary text-xl"></i>
+                        <a href="tencent://message/?uin=1075542448&Site=&Menu=yes" class="text-primary hover:underline">QQ: 1075542448</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-github text-primary text-xl"></i>
+                        <a href="https://github.com/Wei-1021/w-reader" target="_blank" class="text-primary hover:underline">GitHub 仓库</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold mb-6">鸣谢</h2>
+                <p class="text-gray-600 mb-4">本项目的开发离不开以下开源库的支持：</p>
+                <ul class="space-y-3">
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <a href="https://github.com/documentnode/epub4j" target="_blank" class="text-primary hover:underline">epub4j</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <a href="https://github.com/json-path/JsonPath" target="_blank" class="text-primary hover:underline">JsonPath</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <a href=" https://janino-compiler.github.io/janino/" target="_blank" class="text-primary hover:underline">janino</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <a href="https://web.archive.org/web/20210108055829/http://www.javazoom.net/javalayer/javalayer.html" target="_blank" class="text-primary hover:underline">jlayer</a>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <span>Java-WebSocket</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fa fa-external-link text-gray-400"></i>
+                        <span>snakeyaml</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-2 mb-6 md:mb-0">
+                <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-primary">
+                    <i class="fa fa-book text-xl"></i>
+                </div>
+                <span class="text-xl font-bold">W-Reader</span>
+            </div>
+
+            <div class="text-gray-400 text-sm text-center md:text-right">
+                <p>© 2024 W-Reader. 基于 Apache License 2.0 开源协议。</p>
+                <p class="mt-1">版本 v0.1.0</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- 返回顶部按钮 -->
+<button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-primary text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all duration-300 hover:bg-primary/90">
+    <i class="fa fa-chevron-up"></i>
+</button>
+
+<script src="static/js/css-doodle.min.js"></script>
+<script>
+    // 导航栏滚动效果
+    const navbar = document.getElementById('navbar');
+    const backToTop = document.getElementById('back-to-top');
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            navbar.classList.add('py-2', 'shadow');
+            navbar.classList.remove('py-4');
+            backToTop.classList.remove('opacity-0', 'invisible');
+            backToTop.classList.add('opacity-100', 'visible');
+        } else {
+            navbar.classList.add('py-4');
+            navbar.classList.remove('py-2', 'shadow');
+            backToTop.classList.add('opacity-0', 'invisible');
+            backToTop.classList.remove('opacity-100', 'visible');
+        }
+    });
+
+    // 移动端菜单切换
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    menuToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // 关闭移动菜单（如果打开）
+            if (!mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // 返回顶部
+    backToTop.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // FAQ 切换
+    document.querySelectorAll('.faq-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const content = toggle.nextElementSibling;
+            const icon = toggle.querySelector('i');
+
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        });
+    });
+
+    // 显示更多更新日志
+    const showMoreBtn = document.getElementById('show-more-changelog');
+    const moreChangelog = document.getElementById('more-changelog');
+
+    showMoreBtn.addEventListener('click', () => {
+        moreChangelog.classList.toggle('hidden');
+
+        if (moreChangelog.classList.contains('hidden')) {
+            showMoreBtn.innerHTML = '查看更多版本 <i class="fa fa-chevron-down ml-1"></i>';
+        } else {
+            showMoreBtn.innerHTML = '收起 <i class="fa fa-chevron-up ml-1"></i>';
+        }
+    });
+
+    // 滚动动画
+    const animateOnScroll = () => {
+        const elements = document.querySelectorAll('.feature-card, .bg-gray-50.rounded-xl');
+
+        elements.forEach(element => {
+            const elementPosition = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+
+            if (elementPosition < windowHeight - 100) {
+                element.classList.add('animate-fade-in');
+            }
+        });
+    };
+
+    window.addEventListener('scroll', animateOnScroll);
+    window.addEventListener('load', animateOnScroll);
+</script>
+
+</body>
+</html>
