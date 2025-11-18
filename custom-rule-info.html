@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <title>W-Reader——自定义书源规则说明</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="static/css/font-awesome.min.css" rel="stylesheet"/>
+    <link href="static/css/hljs/highlightjs.min.css" rel="stylesheet"/>
+    <script src="static/js/tailwindcss.min.js"></script>
+    <script src="static/js/highlight.min.js"></script>
+    <style>
+        .container {
+            width: 80%;
+            margin: 0 auto 100px auto;
+        }
+
+        .field {
+            margin: 10px 0;
+        }
+
+        .field span:first-child {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .field span:nth-child(2) {
+            font-size: 14px;
+            color: #343030;
+        }
+
+        .field-child {
+            margin: 10px 0 10px 20px;
+        }
+
+        .field-child > .field-child {
+            margin: 10px 0 10px 40px;
+        }
+
+        .field-child span:first-child {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .field-child span:nth-child(2) {
+            font-size: 14px;
+            color: #343044;
+        }
+
+        .field-child p {
+            color: #3b3a3a;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            // darkMode: 'media', // 基于系统首选项 (默认)
+            darkMode: 'class', // 基于类名手动切换
+            theme: {
+                extend: {},
+            },
+            plugins: [],
+        };
+
+        hljs.initHighlightingOnLoad();
+    </script>
+</head>
+<body>
+<div class="bg-white dark:bg-gray-800">
+    <!-- 导航栏 -->
+    <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 backdrop-blur-sm shadow-sm">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white">
+                        <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                             width="30" height="30">
+                            <g transform="translate(-100, -20)">
+                                <path d="M369.664 973.312c-42.496 0-77.312-34.816-77.312-77.312V263.168c0-42.496 34.816-77.312 77.312-77.312h492.032c42.496 0 77.312 34.816 77.312 77.312v632.32c0 42.496-34.816 77.312-77.312 77.312H369.664z"
+                                      fill="#FFFFFF"></path>
+                                <path d="M861.696 209.92c29.184 0 53.76 24.064 53.76 53.76V896c0 29.184-24.064 53.76-53.76 53.76H369.664c-29.184 0-53.76-24.064-53.76-53.76V263.168c0-29.184 24.064-53.76 53.76-53.76h492.032m0-47.616H369.664c-55.808 0-101.376 45.568-101.376 101.376v632.32c0 55.808 45.568 101.376 101.376 101.376h492.032c55.808 0 101.376-45.568 101.376-101.376v-632.32c0.512-55.808-45.056-101.376-101.376-101.376z"
+                                      fill="#333333"></path>
+                                <path d="M369.664 884.736c-42.496 0-77.312-34.816-77.312-77.312V174.592c0-42.496 34.816-77.312 77.312-77.312h492.032c42.496 0 77.312 34.816 77.312 77.312v632.32c0 42.496-34.816 77.312-77.312 77.312H369.664z"
+                                      fill="#24c18f"></path>
+                                <path d="M861.696 121.344c29.184 0 53.76 24.064 53.76 53.76v632.32c0 29.184-24.064 53.76-53.76 53.76H369.664c-29.184 0-53.76-24.064-53.76-53.76V174.592c0-29.184 24.064-53.76 53.76-53.76h492.032m0-47.616H369.664c-55.808 0-101.376 45.568-101.376 101.376v632.32c0 55.808 45.568 101.376 101.376 101.376h492.032c55.808 0 101.376-45.568 101.376-101.376v-632.32c0.512-55.808-45.056-101.376-101.376-101.376z"
+                                      fill="#333333"></path>
+                                <path d="M583.168 342.528c-5.632 0-10.752-2.048-15.36-5.632L512 290.304l-55.808 46.592c-4.608 3.584-9.728 5.632-15.36 5.632-3.584 0-7.168-0.512-10.24-2.048-8.192-4.096-13.824-12.288-13.824-21.504V121.344c0-13.312 10.752-24.064 24.064-24.064h142.336c13.312 0 24.064 10.752 24.064 24.064v197.12c0 9.216-5.632 17.92-13.824 21.504-3.072 1.536-6.656 2.56-10.24 2.56z"
+                                      fill="#FF4540"></path>
+                            </g>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold text-primary text-black dark:text-white">W-Reader</span>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <a href="https://plugins.jetbrains.com/plugin/25572-w-reader"
+                       target="_blank"
+                       class="hidden sm:flex items-center px-4 py-2 rounded-lg bg-primary text-black dark:text-white hover:bg-primary/90 transition-custom">
+                        <i class="fa fa-download mr-2"></i> 立即安装
+                    </a>
+                    <a href="https://github.com/Wei-1021/w-reader"
+                       target="_blank"
+                       class="hidden sm:flex items-center px-4 py-2 rounded-lg bg-primary text-black dark:text-white hover:bg-primary/90 transition-custom">
+                        <i class="fa fa-github mr-2"></i> GitHub
+                    </a>
+                    <a href="javascript: void(0)"
+                       id="toggle-dark-mode"
+                       class="hidden sm:flex items-center px-4 py-2 rounded-lg bg-primary text-black dark:text-white hover:bg-primary/90 transition-custom">
+                        <i class="fa fa-moon-o"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- 主要内容 -->
+    <div class="container text-black dark:text-white pt-20">
+        <h2>自定义书源规则说明</h2>
+        <div>
+            <h3>JSON模板格式如下：</h3>
+            <pre id="json-template">
+                <code id="json-template-code" class="language-json bg-gray-100 dark:bg-gray-500 text-black dark:text-white"></code>
+            </pre>
+            <p>下面我将逐一介绍每个字段的含义，以及该如何填写。</p>
+        </div>
+        <div>
+            <div class="field">
+                <span class="field-title">enabled：</span>
+                <span class="field-desc">是否启用此书源规则，true表示启用，false表示不启用。</span>
+            </div>
+            <div class="field">
+                <span class="field-title">id：</span>
+                <span class="field-desc">书源规则的ID，用于标识书源唯一性（一般为网站域名）。</span>
+            </div>
+            <div class="field">
+                <span class="field-title">name：</span>
+                <span class="field-desc">书源名称，即网站名称。</span>
+            </div>
+            <div class="field">
+                <span class="field-title">baseUrl：</span>
+                <span class="field-desc">书源的根URL，用于拼接其他URL（注意要带上http://或https://），例如：https://www.huanmengacg.com。</span>
+            </div>
+            <div class="field">
+                <span class="field-title">header：</span>
+                <span class="field-desc">请求头，用于模拟请求（暂时没用，字段值留空，别删）。</span>
+            </div>
+            <div class="field">
+                <span class="field-title">searchRules：</span>
+                <span class="field-desc">搜索规则。</span>
+                <div class="field-child">
+                    <span class="field-child-title">url：</span>
+                    <span class="field-child-desc">用于获取搜索小说的结果列表，可以是url地址，也可以是一段java代码。</span>
+                    <div class="field-child">
+                        <p>
+                            1.若url为GET请求，则直接填写url地址，请求参数用${关键字/运算表达式}占位符替代，这里有两个参数：keyword和page，分别表示搜索的关键字和页码，
+                            但是因为目前没有翻页功能，所以页码参数实际上会固定设置为1，例如：https://www.huanmengacg.com/search?q=${keyword}&page=${page}。
+                        </p>
+                        <p>
+                            2.若url为POST请求，则使用以下JSON格式填写：<br>
+                            {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'url': URL地址,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'method': 请求类型,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'queryParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数1': '值1',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数2': '值2'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},
+                            &nbsp;&nbsp;&nbsp;&nbsp;'bodyParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数1': '值1',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数2': '值2'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'header':{<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'请求头参数1': '值1'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            }，<br>
+                            其中url：URL地址，<br>
+                            method：请求类型： GET/POST，默认为GET，<br>
+                            queryParams：查询参数（即拼接在url后面的参数），<br>
+                            bodyParams：请求体参数，<br>
+                            header：请求头<br>
+                            请求参数用${关键字/运算表达式}占位符替代，这里有两个参数：keyword和page，分别表示搜索的关键字和页码，
+                            例如：<br>
+                            {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'url':'http://www.lianjianxsw.com/search',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'method': 'POST',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'queryParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'q': '${key}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'bodyParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'keyword':'${key}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'page':'${page}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'header':{<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Content-Type': 'text/html;
+                            charset=utf-8'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            }
+                        </p>
+                        <p>
+                            3.若为java代码，则需要使用以下格式填写：<br>
+                            &lt;java&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;package_import&gt;导入的包&lt;/package_import&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;code&gt;要执行的代码&lt;/code&gt;<br>
+                            &lt;/java&gt;<br>
+                            例如:<br>
+                            &lt;java&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;package_import&gt;import java.util.*;&lt;/package_import&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;code&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;public String execute(String keyword, page, String page) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;String uuid =
+                            UUID.randomUUID().toString().replaceAll("-", "");<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+                            "http://www.wreaderbook.com/search?q=" + keyword + "&page=" + page + "&t=" + uuid;";<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/code&gt;<br>
+                            &lt;/java&gt;<br>
+                            其中：入口方法为execute，参数为：String keyword和page、String page，<br>
+                            两个参数分别代表：<br>
+                            keyword：搜索的关键字，<br>
+                            page：页码，当前版本固定为1，<br>
+                            execute方法的返回值为请求的url，用于获取搜索结果。
+                        </p>
+                    </div>
+                    <div class="field-child">
+                        <p>
+                            1.若url为GET请求，则直接填写url地址，请求参数用${关键字/运算表达式}占位符替代，这里有两个参数：keyword和page，分别表示搜索的关键字和页码，
+                            但是因为目前没有翻页功能，所以页码参数实际上会固定设置为1，例如：https://www.huanmengacg.com/search?q=${keyword}&page=${page}。
+                        </p>
+                        <p>
+                            2.若url为POST请求，则使用以下JSON格式填写：<br>
+                            {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'url': URL地址,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'method': 请求类型,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'queryParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数1': '值1',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数2': '值2'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},
+                            &nbsp;&nbsp;&nbsp;&nbsp;'bodyParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数1': '值1',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'参数2': '值2'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'header':{<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'请求头参数1': '值1'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            }，<br>
+                            其中url：URL地址，<br>
+                            method：请求类型： GET/POST，默认为GET，<br>
+                            queryParams：查询参数（即拼接在url后面的参数），<br>
+                            bodyParams：请求体参数，<br>
+                            header：请求头<br>
+                            请求参数用${关键字/运算表达式}占位符替代，这里有两个参数：keyword和page，分别表示搜索的关键字和页码，
+                            例如：<br>
+                            {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'url':'http://www.lianjianxsw.com/search',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'method': 'POST',<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'queryParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'q': '${key}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'bodyParams': {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'keyword':'${key}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'page':'${page}'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;'header':{<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Content-Type': 'text/html;
+                            charset=utf-8'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            }
+                        </p>
+                        <p>
+                            3.若为java代码，则需要使用以下格式填写：<br>
+                            &lt;java&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;package_import&gt;导入的包&lt;/package_import&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;code&gt;要执行的代码&lt;/code&gt;<br>
+                            &lt;/java&gt;<br>
+                            例如:<br>
+                            &lt;java&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;package_import&gt;import java.util.regex.*;&lt;/package_import&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;code&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;public String execute(String chapterUrl, String preContentUrlTemp,
+                            String bodyElement) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return (bodyElement.contains("next.png")
+                            ?<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(preContentUrlTemp == null ||
+                            preContentUrlTemp.isEmpty() ?<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;incrementPage(chapterUrl)
+                            : incrementPage(preContentUrlTemp)) :<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"");<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;public String incrementPage(String url) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pattern p =
+                            Pattern.compile("(\\d+)(?:_(\\d+))?(\\.html?)$");<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Matcher m = p.matcher(url);<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!m.find()) return url;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int major = Integer.parseInt(m.group(1)),
+                            minor = m.group(2) == null ? 0 : Integer.parseInt(m.group(2));<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minor++;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return m.replaceFirst(major + "_" + minor +
+                            m.group(3));<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/code&gt;<br>
+                            &lt;/java&gt;<br>
+                            其中：入口方法为execute，参数为：String chapterUrl、String preContentUrlTemp、String bodyElement，<br>
+                            三个参数分别代表：<br>
+                            chapterUrl：当前章节的url，<br>
+                            preContentUrlTemp：上一页的url，<br>
+                            bodyElement：当前章节的html内容。<br>
+                            返回值为请求的url。
+                        </p>
+                    </div>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">dataBookListRule：</span>
+                    <span class="field-child-desc">
+                            数据处理规则，用于处理搜索结果数据，获取小说数据列表，只有当搜索结果返回JSON格式的数据时才需要填写，填写规则请参考JSONPath，例如接口返回的数据如下：
+                            <pre>
+                                {
+                                    "code": 200,
+                                    "data": [
+                                        {
+                                            "_id": "6378fbf07b0ea2c487432117",
+                                            "book_id": "12035313404304503",
+                                            "all_words": 2113921,
+                                            "author_name": "夜十三",
+                                            "category_id": 20019,
+                                            "cover_url": "https://bookcover.yuewen.com/qdbimg/349573/c_12035313404304503/180?h=2j01ji3g45iq9",
+                                            "intro": "intro",
+                                            "keyword": "",
+                                            "status": 30,
+                                            "sub_category_id": 20020,
+                                            "title": "完美重生",
+                                            "category_name": "都市",
+                                            "sub_category_name": "都市生活"
+                                        },
+                                        {
+                                            "_id": "637a1ce67b0ea2c487711015",
+                                            "book_id": "7036856404321803",
+                                            "all_words": 2198317,
+                                            "author_name": "墨乡",
+                                            "category_id": 20050,
+                                            "cover_url": "https://bookcover.yuewen.com/qdbimg/349573/c_7036856404321803/180?h=17bhw49513hpa",
+                                            "intro": "intro",
+                                            "keyword": "",
+                                            "status": 50,
+                                            "sub_category_id": 20051,
+                                            "title": "完美机甲剑神",
+                                            "category_name": "游戏",
+                                            "sub_category_name": "电子竞技"
+                                        },
+                                    ],
+                                    "message": "success",
+                                    "paging": {
+                                        "pi": 1,
+                                        "ps": 30,
+                                        "count": 13
+                                    },
+                                    "oid": "68fb2587fb3003322818fc6e",
+                                    "st": 1761289607
+                                }
+                            </pre>
+                            那如果想要获取小说列表数据，则需要填写：$.data[*]
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">bookListElementName：</span>
+                    <span class="field-child-desc">
+                            用于获取搜索结果列表的cssQuery选择器语法，例如：返回的页面结构为：
+                            <pre>
+                                &lt;body&gt;
+                                &lt;div class=&quot;book-list&quot;&gt;
+                                    &lt;ul&gt;
+                                        &lt;li&gt;
+                                            &lt;div class=&quot;li-dd&quot;&gt;
+                                                &lt;a class=&quot;link&quot; href=&quot;/book/1/&quot; title=&quot;BOOK 001&quot;&gt;BOOK 001&lt;/a&gt;
+                                                &lt;p class=&quot;title&quot;&gt;BOOK 001&lt;/p&gt;
+                                            &lt;/div&gt;
+                                        &lt;/li&gt;
+                                        &lt;li&gt;
+                                            &lt;div class=&quot;li-dd&quot;&gt;
+                                                &lt;a class=&quot;link&quot; href=&quot;/book/2/&quot; title=&quot;BOOK 001&quot;&gt;BOOK 002&lt;/a&gt;
+                                                &lt;p class=&quot;title&quot;&gt;BOOK 002&lt;/p&gt;
+                                            &lt;/div&gt;
+                                        &lt;/li&gt;
+                                    &lt;/ul&gt;
+                                &lt;/div&gt;
+                                &lt;/body&gt;
+                            </pre>
+                            要获取到结果的列表，则需要填写：.book-list ul li。其实等同于js的document.querySelectorAll('.book-list ul li')
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">bookListUrlElement：</span>
+                    <span class="field-child-desc">
+                            用于获取搜索结果列表中每个结果的url（每本小说的链接）的cssQuery选择器语法，注意：这里是以列表的单项的页面结构为基准，以上面的页面结构为例，则以
+                            <pre>
+                                &lt;li&gt;
+                                    &lt;div class="li-dd"&gt;
+                                        &lt;a class="link" href="/book/1/" title="BOOK 001">BOOK 001&lt;/a&gt;
+                                        &lt;p class="title">BOOK 001&lt;/p&gt;
+                                    &lt;/div&gt;
+                                &lt;/li&gt;
+                            </pre>为基准，所以想要获取url信息，那么要填写：.li-dd a，
+                            等同于js的document.querySelectorAll('.book-list ul li')[0].querySelector('.li-dd a').href。需要特别强调的是，
+                            获取的url信息是标签的href属性的值，所以最终需要定位的元素必须是a标签
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">bookListTitleElement：</span>
+                    <span class="field-child-desc">
+                            用于获取搜索结果列表中每个结果的标题（每本小说的标题）的cssQuery选择器语法，注意：这里是以列表的单项的页面结构为基准，以上面的页面结构为例，则以
+                            <pre>
+                                &lt;li&gt;
+                                    &lt;div class="li-dd"&gt;
+                                        &lt;a class="link" href="/book/1/" title="BOOK 001">BOOK 001&lt;/a&gt;
+                                        &lt;p class="title">BOOK 001&lt;/p&gt;
+                                    &lt;/div&gt;
+                                &lt;/li&gt;
+                            </pre>为基准，所以要获取标题信息，你可以填写：.li-dd a，或者：.li-dd .link， 也可以填写：.li-dd p，以及：.li-dd .title，
+                            等同于js的document.querySelectorAll('.book-list ul li')[0].querySelector('.li-dd a').textContent。
+                        </span>
+                </div>
+            </div>
+            <div class="field">
+                <span class="field-title">listMainRules：</span>
+                <span class="field-desc">目录规则。</span>
+                <div class="field-child">
+                    <span class="field-child-title">url：</span>
+                    <span class="field-child-desc">
+                            用于获取小说目录的列表，可以置空，可以是url地址，也可以是一段java代码。
+                        </span>
+                    <div class="field-child">
+                        <p>
+                            1.只有一种情况可以置空，即searchRules.url这里请求的结果是html页面，并且searchRules.bookListUrlElement不为空。
+                        </p>
+                        <p>
+                            2.GET和POST请求规则同上（searchRules.url已介绍），但这里的参数只有一个：bookId，表示小说id
+                        </p>
+                        <p>
+                            3.java代码规则同上（searchRules.url已介绍），入口方法为execute，参数可以是(String)bookId或者BookInfo实体对象，不可以同时传入这两个参数，<br>
+                            bookId表示小说id；<br>
+                            BookInfo实体对象表示小说信息，包含字段：bookId（小说id）、bookName（小说名称）、bookUrl（小说链接）、
+                            bookAuthor（小说作者）、bookDesc（小说描述）、bookImgUrl（小说图片链接）；<br>
+                            返回值为请求的url。
+                        </p>
+                    </div>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">urlDataRule：</span>
+                    <span class="field-child-desc">
+                            数据处理规则，用于处理请求结果数据，获取目录列表。只有当请求结果返回JSON格式的数据时才需要填写，填写规则请参考JSONPath，需要通过JSONPath获取目录列表。
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">itemIdField：</span>
+                    <span class="field-child-desc">
+                            目录列表中每个目录的章节id对应字段名称。在urlDataRule规则获取到数据后，通过itemIdField规则获取目录每一个章节的id。例如，获取的目录数据为：
+                            <pre>
+                                [
+                                    {
+                                        "chapterId": 1,
+                                        "title": "chapter 1",
+                                    },
+                                    {
+                                        "chapterId": 2,
+                                        "title": "chapter 2",
+                                    }
+                                ]
+                                获取目录列表中每个目录的章节id，那么itemIdField填写：chapterId
+                            </pre>
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">itemTitleField：</span>
+                    <span class="field-child-desc">
+                            目录列表中每个目录的章节标题对应字段名称。在urlDataRule规则获取到数据后，通过itemTitleField规则获取目录每一个章节的标题。
+                            以上面的数据为例，获取目录列表中每个目录的章节标题，那么itemTitleField填写：title
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">listMainElementName：</span>
+                    <span class="field-child-desc">
+                            用于获取目录列表的cssQuery选择器语法，例如页面结构为：
+                            <pre>
+                                &lt;body&gt;
+                                &lt;div class="chapterList"&gt;
+                                    &lt;dl>
+                                        &lt;dd&gt;&lt;a href="/chapter/1.html"&gt;第一章 001&lt;/a&gt;&lt;/dd&gt;
+                                        &lt;dd&gt;&lt;a href="/chapter/2.html"&gt;第二章 002&lt;/a&gt;&lt;/dd&gt;
+                                        &lt;dd&gt;&lt;a href="/chapter/3.html"&gt;第三章 003&lt;/a&gt;&lt;/dd&gt;
+                                    &lt;/dl&gt;
+                                &lt;/div&gt;
+                                &lt;/body&gt;
+                            </pre>
+                            想要获取目录列表，那么listMainElementName填写：.chapterList dl dd，等同于js的document.querySelectorAll('.chapterList dl dd')。
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">urlElement：</span>
+                    <span class="field-child-desc">
+                            章节链接cssQuery语法，以目录列表的单项结构作为基准，以上面的页面结构为例，那么将以下面的html作为获取数据的基准元素：
+                            <pre>
+                                &lt;dd&gt;&lt;a href="/chapter/1.html"&gt;第一章 001&lt;/a&gt;&lt;/dd&gt;
+                            </pre>
+                            因此urlElement填写：a，等同于js的document.querySelectorAll('.chapterList dl dd')[0].querySelector('a').href
+                        </span>
+                </div>
+                <div class="field-child">
+                    <span class="field-child-title">titleElement：</span>
+                    <span class="field-child-desc">
+                            章节标题cssQuery语法，同urlElement一样，以目录列表的单项结构作为基准，以上面的页面结构为例，titleElement填写：a，
+                            等同于js的document.querySelectorAll('.chapterList dl dd')[0].querySelector('a').textContent
+                        </span>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="field-child">
+                    <span class="field-child-title">chapterRules：</span>
+                    <span class="field-child-desc">
+                            章节处理规则，用于处理章节数据，获取章节内容。
+                        </span>
+                    <div class="field-child">
+                        <span class="field-child-title">url：</span>
+                        <span class="field-child-desc">
+                                用于获取章节内容，可以置空，可以是url地址，也可以是一段java代码。
+                                <p>
+                                    1.只有一种情况可以置空，listMainRules.url这里请求的结果是html页面，并且listMainRules.listMainElementName。
+                                </p>
+                                <p>
+                                    2.GET和POST请求规则同上（searchRules.url已介绍），这里的参数有两个参数：bookId、itemId，表示小说id和章节id
+                                </p>
+                                <p>
+                                    3.java代码规则同上（searchRules.url已介绍），入口方法为execute，<br>
+                                    参数为：Map&lt;String,Object&gt; paramMap、List&lt;Object&gt; indexList、String bookId、List&lt;Object&gt; itemIdList，<br>
+                                    各参数含义：<br>
+                                    paramMap：；<br>
+                                    indexList：；<br>
+                                    bookId：；<br>
+                                    itemIdList：；<br>
+                                    返回值类型为List&lt;String&gt;，返回值中每个元素为章节链接。
+                                </p>
+                            </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const toggle = document.getElementById('toggle-dark-mode');
+    toggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.theme = isDark ? 'dark' : 'light';
+        if (localStorage.theme === 'dark') {
+            toggle.innerHTML = '<i class="fa fa-moon-o"></i>';
+        } else {
+            toggle.innerHTML = '<i class="fa fa-sun-o"></i>';
+        }
+    });
+
+    let jsonTemplate =
+        `[{
+            "enabled": true,
+            "id": "",
+            "name": "",
+            "baseUrl": "",
+            "header": "",
+            "searchRules": {
+                "url": "",
+                "dataBookListRule": "",
+                "bookListElementName": "",
+                "bookListUrlElement": "",
+                "bookListTitleElement": ""
+            },
+            "listMainRules": {
+                "url": "",
+                "urlDataRule": "",
+                "itemIdField": "",
+                "itemTitleField": "",
+                "listMainElementName": "",
+                "urlElement": "",
+                "titleElement": ""
+            },
+            "chapterRules": {
+                "url": "",
+                "urlDataRule": "",
+                "contentHandleRule": "",
+                "useContentOriginalStyle": false,
+                "replaceContentOriginalRegex": "",
+                "contentElementName": "",
+                "nextContentUrl": "",
+                "useNextContentApi": false,
+                "nextContentApiDataRule": "",
+                "contentRegexList": []
+            },
+            "bookInfoRules": {
+                "bookIdField": "book_id",
+                "bookNameField": "even",
+                "bookUrlField": "bookUrl",
+                "bookAuthorField": "bookAuthor",
+                "bookDescField": "bookDesc",
+                "bookImgUrlField": "bookImgUrl"
+            },
+            "hasHtml": true
+        }]`
+    codeHighlightById(jsonTemplate, "json-template-code")
+
+    function codeHighlightById(code, domElem) {
+        document.getElementById(domElem).innerHTML = hljs.highlightAuto(jsonTemplate).value
+    }
+</script>
+</body>
+</html>

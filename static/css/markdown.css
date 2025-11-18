@@ -1,0 +1,12 @@
+pre {
+    margin: 0;
+    padding: 15px;
+    overflow-x: auto;
+    background: #1d1f21 !important;
+    border-radius: 0 0 8px 8px;
+}
+
+code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+}

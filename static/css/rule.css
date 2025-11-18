@@ -1,0 +1,103 @@
+.container {
+    width: 80%;
+    margin: 0 auto 100px auto;
+}
+
+.field {
+    margin: 10px 0;
+}
+
+.field span:first-child {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.field span:nth-child(2) {
+    font-size: 14px;
+    color: #343030;
+}
+
+.field-child {
+    margin: 10px 0 10px 20px;
+}
+
+.field-child > .field-child {
+    margin: 10px 0 10px 40px;
+}
+
+.field-child span:first-child {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.field-child span:nth-child(2) {
+    font-size: 14px;
+    color: #343044;
+}
+
+.field-child p {
+    color: #3b3a3a;
+}
+
+blockquote > :first-child:active {
+    color: #cccccc !important;
+}
+
+.blockquote-arrow {
+    display: inline-block;
+    cursor: pointer;
+    padding: 5px 5px 0 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #c8c8c8;
+    font: normal normal normal 13px / 1 FontAwesome;
+}
+
+.blockquote-collapsed::before {
+    content: "\f102 收起";
+}
+
+.blockquote-expanded::before {
+    content: "\f103 展开";
+}
+
+.fixed-box {
+    width: 80px;
+}
+
+.fixed-box-blockquote-arrow {
+    width: 50px;
+    height: 50px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.fixed-box-blockquote-collapsed {
+    background-color: #1f6feb;
+    color: #FFF;
+}
+.fixed-box-blockquote-expanded {
+    background-color: rgba(255, 0, 0, 0.8);
+    color: #FFF;
+}
+
+pre {
+    position: relative;
+}
+
+.markdown-body blockquote {
+    transition: all 0.5s ease;
+}
+
+.pre-copy {
+    color: var(--fgColor-muted);
+    transition: color 0.1s;
+}
+
+.pre-copy:active {
+    color: var(--borderColor-default);
+}
