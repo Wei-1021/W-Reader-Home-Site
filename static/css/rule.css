@@ -1,5 +1,9 @@
+ol {
+    list-style: decimal !important;
+}
+
 .container {
-    width: 60%;
+    width: 60% !important;
     margin: 0 auto 100px auto;
 }
 
