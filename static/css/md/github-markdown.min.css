@@ -120,9 +120,11 @@
         --color-prettylights-syntax-markup-ignored-bg: #0550ae;
         --color-prettylights-syntax-meta-diff-range: #8250df;
         --color-prettylights-syntax-sublimelinter-gutter-mark: #818b98;
-        --color-bg-pre-3: rgba(201, 215, 235, 0.2);
-        --color-bg-pre-5: rgba(201, 215, 235, 0.5);
-        --color-bg-pre-8: rgba(201, 215, 235, 0.8);
+        --color-bg-pre-10: rgba(201, 215, 235, 0.1);
+        --color-bg-pre-15: rgba(201, 215, 235, 0.15);
+        --color-bg-pre-30: rgba(201, 215, 235, 0.3);
+        --color-bg-pre-50: rgba(201, 215, 235, 0.5);
+        --color-bg-pre-80: rgba(201, 215, 235, 0.8);
     }
 }
 
@@ -238,9 +240,9 @@
     overflow: hidden;
     background: 0 0;
     border-bottom: 1px solid var(--borderColor-muted);
-    height: .25em;
+    height: 1px;
     padding: 0;
-    margin: var(--base-size-24) 0;
+    margin: var(--base-size-16) 0;
     background-color: var(--borderColor-default);
     border: 0
 }
@@ -396,11 +398,11 @@
     padding: 0.5em 1em;
     color: var(--fgColor-muted);
     border-left: .25em solid var(--borderColor-default);
-    background-color: var(--color-bg-pre-3);
+    background-color: var(--color-bg-pre-15);
 }
 
 .markdown-body blockquote pre {
-    background-color: var(--color-bg-pre-5);
+    background-color: var(--color-bg-pre-30);
 }
 
 .markdown-body ol, .markdown-body ul {
