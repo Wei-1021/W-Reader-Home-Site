@@ -53,7 +53,7 @@ ____________________________
 ____________________________ 
 `name`：书源名称，即网站名称。
 ____________________________
-`baseUrl`：书源的根URL，用于拼接其他URL（**注意要带上http://或https://**），例如：https://www.testsite.com。
+`baseUrl`：书源的根URL，用于拼接其他URL（**注意要带上`http://`或`https://`**），例如：https://www.testsite.com。
 ____________________________
 `header`：请求头，用于模拟请求（暂时没用）。
 ____________________________
@@ -234,9 +234,11 @@ ____________________________
 >>
 >> 3. `java`代码规则同上（`searchRules.url`已介绍），入口方法为`execute`，参数可以是`String bookId`或者`BookInfo`实体对象两者中的一个，不可以同时传入这两个参数，
 >> 其中：  
->> `bookId`表示小说id；  
->> `BookInfo`对象表示小说信息，包含字段：`bookId`（小说id）、`bookName`（小说名称）、`bookUrl`（小说链接）、
+>> `bookId`：小说id，仅搜索小说返回结果是JSON数据时才有效；  
+>> `BookInfo`：小说信息实体对象，包含字段：`bookId`（小说id）、`bookName`（小说名称）、`bookUrl`（小说链接）、
 >> `bookAuthor`（小说作者）、`bookDesc（`小说描述）、`bookImgUrl`（小说图片链接）；  
+>> 当搜索小说返回的结果是HTML页面时，BookInfo为仅`bookName`和`bookUrl`有值；  
+>> 当搜索小说返回的结果是JSON数据时，只要返回结果中包含有，那BookInfo中所有字段都有值；（对应字段名称规则请跳转至`bookInfoRules`小说基本信息处理规则部分）  
 >> 返回值为请求获取小说目录的`url`链接。
 > ____________________________
 > ##### `urlDataRule`：获取目录列表的JSONPath语法规则，用于处理目录列表结果数据。只有当请求结果返回JSON格式的数据时才需要填写，填写规则请参考`JSONPath`，需要通过`JSONPath`获取目录列表，例如：
@@ -360,19 +362,21 @@ ____________________________
 >> 要获取章节内容，那么`contentElementName`填写：`.content`，等同于js的`document.querySelectorAll('.content')`。 
 > ____________________________
 > ##### `nextContentUrl`：本章节下一页内容的链接（针对某些网站会把一章内容分成多页的情况），此处填写的规则为java代码，入口方法为`execute`：
->> 这里有三个参数:   
-> `String chapterUrl`、`String preContentUrl`，`String prePageContent`，  
-> 三个参数分别代表：  
+>> 这里有四个参数:   
+> `String chapterUrl`、`int loadingPage`、`String preContentUrl`，`String prePageContent`，  
+> 四个参数分别代表：  
 > `chapterUrl`：章节链接；   
-> `preContentUrl`：上一页链接；  
-> `prePageContent`：上一页内容。  
+> `loadingPage`：正在加载的页码，从1开始；  
+> `preContentUrl`：上一页链接（即当前视图正在显示的页面链接），若为空时，代表是第一页；  
+> `prePageContent`：上一页内容（即当前视图正在显示的页面），第一页则为第一页本身内容。 若是HTML页面，则为`<body></body>`标签内的HTML元素；若是JSON数据，则为返回的JSON数据字符串。 
 > 返回值为下一页链接。  
-> 提示：下一页链接的请求类型可以是`GET`或`POST`，其规则与`searchRules.url`介绍的一致，但没有参数占位符。
-> **特别注意的是，只有`execute`方法返回空值时，请求获取下一页的进程才会结束，否则系统会一直请求，例如：可以通过查找页面是否有下一页的按钮来判断是否为最后一页。**
+> 提示：返回的下一页链接的请求类型可以是`GET`或`POST`，其规则与`searchRules.url`中1和2介绍的一致，但没有参数占位符。  
+> 当章节所有页面都加载完成后，侧边栏滚动条会滚动回顶部。  
+> **特别注意的是，只有`execute`方法返回空值时，请求下一页的进程才会结束，否则系统会一直请求；例子：可以通过查找页面是否有下一页的按钮来判断是否为最后一页。**
 > ____________________________
 > ##### `useNextContentApi`：获取下一页链接的返回结果是否为JSON格式数据，布尔类型。
 > ____________________________
-> ##### `nextContentUrlDataRule`：获取下一页内容的数据处理规则。只有当`useNextContentApi`为`true`时（即请求结果返回JSON格式的数据时）才需要填写，填写规则请参考`JSONPath`，需要通过`JSONPath`获取下一页内容，例如：
+> ##### `nextContentUrlDataRule`：获取下一页内容的`JSONPath`语法规则。只有当`useNextContentApi`为`true`时（即请求结果返回JSON格式的数据时）才需要填写，填写规则请参考`JSONPath`，需要通过`JSONPath`获取下一页内容，例如：
 >> ```json
 >> {
 >>   "code": 200,
@@ -396,9 +400,14 @@ ____________________________
 ***提示：如果部分字段不存在或者不了解，可以填写任意与其他字段不重复的字符，但不建议为空。***  
 
 > ##### `bookIdField`: 小说id字段名称，用于获取小说id。
+> ____________________________
 > ##### `bookNameField`: 小说名称字段名称，用于获取小说名称。
+> ____________________________
 > ##### `bookUrlField`: 小说链接字段名称，用于获取小说链接。
+> ____________________________
 > ##### `bookAuthorField`: 小说作者字段名称，用于获取小说作者。
+> ____________________________
 > ##### `bookDescField`: 小说简介字段名称，用于获取小说简介。
+> ____________________________
 > ##### `bookImgUrlField`: 小说封面字段名称，用于获取小说封面。
 ____________________________
