@@ -338,8 +338,8 @@ ____________________________
 >> 要获取章节内容，那么`urlDataRule`填写：`$.modelData.content`
 > ____________________________
 > ##### `contentHandleRule`：章节内容处理规则，对获取到的章节内容进行处理，例如文字解码、规则替换等等。
->> 此处填写的规则为`java`代码，入口方法为`execute`，参数为`String content`。  
->> **返回值**为处理后的章节内容，例如：  
+>> 此处填写的规则为`java`代码，若觉得使用`java`代码比较繁琐，只想使用正则表达式对内容进行一个简单的替换，可以使用下面的`chapterRules.contentRegexList`；  
+>> 入口方法为`execute`，参数为`String content`， **返回值**为处理后的章节内容，例如：  
 >> 如果要对内容进行base64解码，那么`contentHandleRule`填写：
 >> ```xml
 >> <java>
@@ -388,8 +388,14 @@ ____________________________
 >>         public String execute(String chapterUrl, int loadingPage, String preContentUrl, String prePageContent) {
 >>             if (!prePageContent.contains("next.png")) { 
 >>                 return "";
->>             }
->>             return chapterUrl.replaceAll(".html", String.format("_%s.html", loadingPage));
+>>             } 
+>>             String nextContentUrl = chapterUrl.replaceAll(".html", String.format("_%s.html", loadingPage));
+>>             // 任选一种返回方式
+>>             // 返回方式1：直接返回请求链接                    
+>>             // return nextContentUrl;
+>>             
+>>             // 返回方式2：返回请求格式字符串
+>>             // return String.format("{\"url\":\"%s\",\"method\":\"POST\",\"queryParams\":{},\"bodyParams\":{\"tt\":\"123456\",},\"header\":{}}", nextContentUrl);
 >>         }
 >>     </code>
 >> </java>
