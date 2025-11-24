@@ -47,6 +47,9 @@
 }]
 ```
 ### 配置项说明:
+❗ ***提示：填写`JSON`格式数据时，请务必对填写的内容进行转义，否则会出现解析错误。***
+____________________________
+
 `enabled`: 是否启用
 ____________________________ 
 `id`：书源规则的ID，用于标识书源唯一性（一般为网站域名）。
@@ -376,7 +379,21 @@ ____________________________
 > **返回值**为下一页链接。  
 > 提示：返回的下一页链接的请求类型可以是`GET`或`POST`，其规则与`searchRules.url`中1和2介绍的一致，但没有参数占位符。  
 > 当章节所有页面都加载完成后，侧边栏滚动条会滚动回顶部。  
-> **特别注意的是，只有`execute`方法返回空值时，请求下一页的进程才会结束，否则系统会一直请求；例子：可以通过查找页面是否有下一页的按钮来判断是否为最后一页。**
+> **特别注意的是，只有`execute`方法返回空值时，请求下一页的进程才会结束，否则系统会一直请求；例子：可以通过查找页面是否有下一页的按钮来判断是否为最后一页。**  
+>> 示例：
+>>```xml
+>> <java>
+>>     <package_import></package_import>
+>>     <code>
+>>         public String execute(String chapterUrl, int loadingPage, String preContentUrl, String prePageContent) {
+>>             if (!prePageContent.contains("next.png")) { 
+>>                 return "";
+>>             }
+>>             return chapterUrl.replaceAll(".html", String.format("_%s.html", loadingPage));
+>>         }
+>>     </code>
+>> </java>
+>> ```
 > ____________________________
 > ##### `useNextContentApi`：获取下一页链接的返回结果是否为JSON格式数据，布尔类型。
 > ____________________________
